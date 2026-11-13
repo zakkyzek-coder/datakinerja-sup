@@ -1,57 +1,41 @@
-# DataKinerja — Supabase migration
+# DataKinerja — Supabase + GitHub Pages
 
-Repository for the gradual migration of DataKinerja from Google Apps Script + Google Sheets to Supabase + GitHub Pages.
+This repository contains the static-hosting migration of the existing DataKinerja dashboard. The original dashboard markup, styles, mobile behavior, and chart/rendering logic were carried over from the supplied GAS HTML files.
 
-## Current status
+## Files
 
-**Phase 1: Supabase data adapter committed.** The existing dashboard UI, chart renderers, formulas, filters, and GAS app remain unchanged.
+- `index.html` — dashboard markup and login screen
+- `styles.css`, `mobile.css` — original styling and mobile overrides
+- `scripts.js`, `mobile.js` — existing dashboard logic and mobile drawer behavior
+- `supabase-client.js` — Supabase Auth integration and a compatibility bridge for the old `google.script.run` calls
+- `supabase-data.js` — reads `bks_sumber`, `bks_data`, and selected `bks_pengaturan` values and maps rows to the existing dashboard data contract
 
-Files:
-- `supabase-data.js`: reads configured sources from `bks_sumber`, reads rows from `bks_data`, and maps records to a GAS-compatible response shape.
+## Supabase
 
-## Adapter contract
+- Project URL: `https://qrdmphbpqgsymfzxgija.supabase.co`
+- Browser uses only the public publishable key. Never put a `service_role` key in this repository.
+- Login uses Supabase Auth **email + password**. The signed-in user must have an active matching row in `bks_pengguna`.
+- Data access depends on the existing RLS policies. Do not disable RLS to make the app work.
 
-The adapter returns:
-```js
-{
-  success: true,
-  sheets: { /* requested source name: normalized rows[] */ },
-  missing: [],
-  settings: { dailyStartMonth: '2026-11', today: 'YYYY-MM-DD' },
-  updateData: '',
-  lastUpdated: ''
-}
-```
+## Current migration status
 
-It maps database rows to legacy property names `p,d,m,daily,seg,q,u,k,c,v,t,yoy,ytd,mtm,rbb` so the renderer can be migrated separately.
+The original renderer is preserved, and data/login calls have been redirected to Supabase. This is a **staged migration, not yet a complete production replacement**.
 
-## Supabase configuration
+The current `bks_sumber` table contains only six registered sources: `Aset 1`, `DPK 1`, `Pby 1`, `Eks FLPP 1`, `NOA Eks FLPP 1`, and `Peringkat AO`. Many pages in the original dashboard request additional sources; those pages will show missing-data notices until the corresponding sources and rows are imported/registered in Supabase. No existing GAS application or database schema was changed during frontend integration.
 
-Project URL for this app:
-`https://qrdmphbpqgsymfzxgija.supabase.co`
+The legacy user-management screen is not migrated yet. Creating/deleting branch users must be implemented through a secure server-side admin function; do not expose service-role credentials in the browser.
 
-Create the client in an ES module, then import the adapter. **Use only the publishable/anon key in browser code; never put a service_role key in this repository.**
+## Enable GitHub Pages
 
-```js
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { createDataKinerjaService } from './supabase-data.js';
+1. Open **Settings → Pages** in this repository.
+2. Under **Build and deployment**, choose **Deploy from a branch**.
+3. Select branch `main` and folder `/(root)`, then save.
+4. Wait for GitHub Pages to publish the site; GitHub will show the site URL on the same settings page.
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-const dataService = createDataKinerjaService(supabase);
-const result = await dataService.getDataBundle(['Aset 1', 'DPK 1']);
-console.log(result);
-```
+## Test checklist before relying on it
 
-The user authentication flow and RLS must be configured before the browser can access protected data.
-
-## Important implementation limits
-
-- This adapter is a transport layer only. It does **not** yet integrate with the existing dashboard frontend.
-- Source rows currently configured in `bks_sumber` are limited to Aset 1, DPK 1, Eks FLPP 1, NOA Eks FLPP 1, Pby 1, and Peringkat AO. Other requested sheets will be reported in `missing` until they are registered correctly.
-- `force` is accepted for compatibility with the legacy function signature; adapter caching is not implemented yet.
-- `updateData` is currently derived from the newest readable `source_date`, not the legacy `Update Data!B1` cell.
-- Before switching users from GAS, integrate auth and this adapter into `muatData()`, then compare representative periods/units against GAS.
-
-## GitHub Pages
-
-Once the frontend and Supabase authentication are integrated, enable GitHub Pages in repository Settings → Pages. Do not publish credentials or Supabase service-role keys.
+- Sign in with the email/password for an active Supabase Auth user linked to `bks_pengguna`.
+- Verify the Aset, DPK, and Pembiayaan summary against the existing GAS dashboard for the same period and unit.
+- Check the top-bar warning for missing sources. A successful login does not mean every dashboard page has been migrated.
+- Test desktop and mobile layout.
+- Keep the original GAS deployment available until the full source inventory, authentication, role management, and numerical comparisons are complete.
