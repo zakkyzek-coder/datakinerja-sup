@@ -9,7 +9,8 @@ Dashboard ini tetap menggunakan Google Sheets sebagai sumber data. Supabase tida
 3. **Jangan mengganti `doGet(e)` yang ada.** Tambahkan isi file `GAS_API_PATCH.gs` di bagian paling bawah.
 4. Simpan, lalu buka **Deploy → Manage deployments → Edit** pada deployment Web App yang sama.
 5. Pilih **New version**, lalu klik **Deploy**. Pertahankan URL Web App yang sama.
-6. Tes URL Web App lama; dashboard GAS seharusnya tetap tampil seperti biasa.
+6. Pastikan deployment berjalan sebagai pemilik script (**Execute as: Me**) dan aksesnya mengizinkan endpoint dipanggil oleh Worker (**Who has access: Anyone**, bila opsi ini tersedia di akunmu). Akses data tetap dibatasi oleh token sesi dan pemeriksaan role di fungsi backend.
+7. Tes URL Web App lama; dashboard GAS seharusnya tetap tampil seperti biasa.
 
 Patch ini menambahkan `doPost` untuk meneruskan hanya metode yang diizinkan ke fungsi login/data yang sudah ada. Fungsi `getDataBundle` dan pengelolaan user tetap memakai validasi token yang ada di Code.gs.
 
