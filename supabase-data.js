@@ -67,7 +67,7 @@ function mapDbRow(row, source) {
   };
 }
 
-export function createDataKinerjaService(supabase, options = {}) {
+window.createDataKinerjaService = function createDataKinerjaService(supabase, options = {}) {
   if (!supabase?.from) throw new Error('Supabase client belum diberikan.');
   const tableData = options.tableData ?? 'bks_data';
   const tableSources = options.tableSources ?? 'bks_sumber';
