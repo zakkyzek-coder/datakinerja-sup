@@ -871,7 +871,7 @@ function prosesLogin() {
     }
 
     if (!user || !pass) {
-      tampilkanError('Email dan password wajib diisi.');
+      tampilkanError('Username dan password wajib diisi.');
       return;
     }
 
