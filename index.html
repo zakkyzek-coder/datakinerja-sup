@@ -1,0 +1,2970 @@
+<!DOCTYPE html>
+
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>Dashboard Divisi Usaha Syariah</title>
+  <script>
+    try { document.documentElement.dataset.theme = localStorage.getItem('bks-dashboard-theme') === 'dark' ? 'dark' : 'light'; }
+    catch (e) { document.documentElement.dataset.theme = 'light'; }
+  </script>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+
+  
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./mobile.css">
+</head>
+<body>
+  
+  
+
+  
+  
+
+
+<div id="login-page">
+  <form class="login-card" onsubmit="prosesLogin(); return false;">
+    <h1>DASHBOARD DIVISI USAHA<br>SYARIAH</h1>
+    <p class="subtitle">Silakan masuk untuk melanjutkan..</p>
+    <div class="form-group">
+      <label for="username">Email</label>
+      <input type="text" id="username" placeholder="Masukkan email akun Supabase" autocomplete="username" inputmode="email">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Masukkan password" autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn-login" id="btnLogin">Masuk</button>
+    <div class="error-msg" id="loginError">Username atau password salah!</div>
+  </form>
+</div>
+
+
+
+  
+  <div id="dashboard-page">
+    <div class="app-layout">
+
+      
+      
+
+
+<aside class="sidebar" id="sidebar">
+  
+  <div class="sidebar-header">
+    <div class="brand-wrapper">
+      <div class="brand-icon"><i data-lucide="landmark" style="width: 20px; height: 20px; color: #fff;"></i></div>
+      <div class="brand-text"><h2>Unit Usaha<br>Syariah</h2></div>
+    </div>
+    <button class="btn-collapse" onclick="toggleSidebar()" title="Sembunyikan / Tampilkan Menu"><i data-lucide="chevron-left"></i></button>
+  </div>
+  
+  <div class="menu-caption">Menu Navigasi</div>
+  <div class="nav-scroll"><ul class="nav-list" id="sidebarMenuContainer"></ul></div>
+</aside>
+
+
+
+      
+      <main class="main-area">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="btn-toggle-top" onclick="toggleSidebar()"><i data-lucide="panel-left" style="width: 19px; height: 19px;"></i></button>
+            <div class="topbar-titles">
+              <h1>DASHBOARD DIVISI USAHA SYARIAH</h1>
+              <div class="breadcrumb-row">
+                <p id="breadcrumb">HIGHLIGHT KINERJA / RINGKASAN EKSEKUTIF</p>
+                <span class="sync-status-badge" id="syncBadge">Memuat Spreadsheet...</span>
+              </div>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <button class="btn-sync" id="btnSync" onclick="sinkronkanDataSheet()">
+              <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i><span>Sinkronkan Data</span>
+            </button>
+            <div class="session-timer"><i data-lucide="clock" style="width: 14px; height: 14px;"></i><span>Sisa sesi <strong id="timer">60:00</strong></span></div>
+            <button type="button" id="themeSwitch" class="theme-switch" role="switch" aria-checked="false" aria-label="Mode gelap" onclick="toggleTheme()">
+              <span class="theme-track" aria-hidden="true"></span><span id="themeLabel">Terang</span>
+            </button>
+            <div class="user-badge"><div class="user-avatar" id="userInisial">D</div><div class="user-details"><div class="name" id="userName">DIVISI USAHA SYARIAH</div><div class="role" id="userRole">User</div></div></div>
+            <button class="btn-logout" onclick="prosesLogout()"><i data-lucide="log-out" style="width: 14px; height: 14px;"></i><span>Keluar</span></button>
+          </div>
+        </header>
+
+        
+        
+
+
+<div class="filter-grid">
+  <div class="filter-card" data-filter="mode">
+    <label class="filter-label" for="filterMode">Tampilan periode</label>
+    <select id="filterMode" onchange="gantiModePeriode()"><option value="Bulanan">Bulanan</option><option value="Harian">Harian bulan berjalan</option></select>
+  </div>
+  <div class="filter-card" data-filter="tanggal">
+    <label class="filter-label" for="filterTanggal"><i data-lucide="calendar" style="width:13px;height:13px;"></i> Tanggal Data</label>
+    <select id="filterTanggal" onchange="terapkanFilter()"></select>
+  </div>
+
+  <div class="filter-card tahun-dropdown" id="filterTahun" data-filter="tahun">
+    <label class="filter-label"><i data-lucide="calendar-range" style="width:13px;height:13px;"></i> Tahun</label>
+    <button type="button" class="tahun-toggle" onclick="toggleTahunDropdown(event)">
+      <span id="filterTahunRingkas">Semua Tahun</span><i data-lucide="chevron-down"></i>
+    </button>
+    <div class="tahun-panel" onclick="event.stopPropagation()">
+      <div class="tahun-panel-head">
+        <button type="button" onclick="pilihSemuaTahun()">Pilih semua</button>
+        <button type="button" onclick="pilihTahunTerakhir()">Terbaru saja</button>
+      </div>
+      <div class="tahun-list" id="filterTahunList"></div>
+      <div class="tahun-catatan" id="filterTahunCatatan">Minimal satu tahun harus dipilih.</div>
+    </div>
+  </div>
+
+  <div class="filter-card" data-filter="series">
+    <label class="filter-label" for="filterSeries"><i data-lucide="layers" style="width:13px;height:13px;"></i> Series Data</label>
+    <select id="filterSeries" onchange="terapkanFilter()">
+      <option value="Bulanan" selected>Bulanan</option>
+      <option value="Triwulanan">Triwulanan</option>
+      <option value="Semester">Semester</option>
+      <option value="Tahunan">Tahunan</option>
+    </select>
+  </div>
+
+  <div class="filter-card" data-filter="konsolidasi">
+    <label class="filter-label" for="filterKonsolidasi"><i data-lucide="building-2" style="width:13px;height:13px;"></i> Konsolidasi Cabang</label>
+    <select id="filterKonsolidasi" onchange="onKonsolidasiChange()">
+      <option value="Unit Usaha Syariah">Unit Usaha Syariah</option>
+      <option value="KCS Banjarmasin Konsolidasi">Konsolidasi KCS Banjarmasin</option>
+      <option value="KCS Kandangan Konsolidasi">Konsolidasi KCS Kandangan</option>
+      <option value="UUS KP">UUS KP</option>
+    </select>
+  </div>
+
+  <div class="filter-card" data-filter="unit">
+    <label class="filter-label" for="filterUnitKerja"><i data-lucide="map-pin" style="width:13px;height:13px;"></i> Unit Kerja</label>
+    <select id="filterUnitKerja" onchange="terapkanFilter()"></select>
+  </div>
+</div>
+
+
+
+        
+        <p id="periodNotice" class="period-notice" role="status" hidden></p>
+        <div id="page-home" class="page">
+          <div class="highlight-banner">
+            <h2><i data-lucide="sparkles" style="width: 18px; color: var(--primary-green);"></i><span>HIGHLIGHT KINERJA UTAMA</span></h2>
+            <span class="hint">Klik salah satu kartu untuk membuka halaman highlight-nya</span>
+          </div>
+
+          <div class="highlight-grid-3">
+            <div class="hl-card card-aset" onclick="bukaHalamanHlAset()">
+              <div>
+                <div class="hl-card-top">
+                  <div><div class="hl-card-title">ASET & LABA</div><div style="font-size: 11px; opacity: 0.8;" id="home-sub-aset">-</div></div>
+                  <div class="hl-card-icon"><i data-lucide="trending-up" style="color: #fff;"></i></div>
+                </div>
+                <div class="hl-metrics-row">
+                  <div class="hl-metric-item"><span class="lbl">Total Aset</span><span class="val" id="home-val-aset">-</span></div>
+                  <div class="hl-metric-item"><span class="lbl">Laba</span><span class="val" id="home-val-laba">-</span></div>
+                </div>
+              </div>
+              <div class="hl-card-footer">
+                <span id="home-rbb-aset">RBB/C Aset: -</span>
+                <span class="goto-btn">Buka Aset & Laba <i data-lucide="arrow-right" style="width: 13px;"></i></span>
+              </div>
+            </div>
+
+            <div class="hl-card card-dpk" onclick="bukaHalamanHlDpk()">
+              <div>
+                <div class="hl-card-top">
+                  <div><div class="hl-card-title">DANA PIHAK KETIGA (DPK)</div><div style="font-size: 11px; opacity: 0.8;" id="home-sub-dpk">-</div></div>
+                  <div class="hl-card-icon"><i data-lucide="wallet" style="color: #fff;"></i></div>
+                </div>
+                <div class="hl-metrics-row">
+                  <div class="hl-metric-item"><span class="lbl">Nominal DPK</span><span class="val" id="home-val-dpk">-</span></div>
+                  <div class="hl-metric-item"><span class="lbl">NOA DPK</span><span class="val" id="home-noa-dpk">-</span></div>
+                </div>
+              </div>
+              <div class="hl-card-footer">
+                <span id="home-rbb-dpk">RBB/C DPK: -</span>
+                <span class="goto-btn">Buka DPK <i data-lucide="arrow-right" style="width: 13px;"></i></span>
+              </div>
+            </div>
+
+            <div class="hl-card card-pby" onclick="bukaHalamanHlPembiayaan()">
+              <div>
+                <div class="hl-card-top">
+                  <div><div class="hl-card-title">PEMBIAYAAN</div><div style="font-size: 11px; opacity: 0.8;" id="home-sub-pby">-</div></div>
+                  <div class="hl-card-icon"><i data-lucide="hand-coins" style="color: #fff;"></i></div>
+                </div>
+                <div class="hl-metrics-row">
+                  <div class="hl-metric-item"><span class="lbl">Nominal Pembiayaan</span><span class="val" id="home-val-pby">-</span></div>
+                  <div class="hl-metric-item"><span class="lbl">NOA Pembiayaan</span><span class="val" id="home-noa-pby">-</span></div>
+                </div>
+              </div>
+              <div class="hl-card-footer">
+                <span id="home-rbb-pby">RBB/C Pembiayaan: -</span>
+                <span class="goto-btn">Buka Pembiayaan <i data-lucide="arrow-right" style="width: 13px;"></i></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3><i data-lucide="bar-chart-2" style="width:18px;height:18px;color:var(--primary-green);"></i><span>Tren Ringkasan: Aset, DPK & Pembiayaan</span></h3>
+              <span class="chart-badge" id="home-badge-trend">-</span>
+            </div>
+            <div class="canvas-line-wrap" style="height: 300px;"><canvas id="homeOverviewChart"></canvas></div>
+          </div>
+        </div>
+
+        
+        
+        
+
+
+<div id="page-hlaset" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">HIGHLIGHT KINERJA: ASET & LABA</span>
+      <span class="page-sub-info" id="hla-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="hla-aset" data-label="Aset" data-icon="landmark" data-theme="bg-main"></div>
+  <div class="kpi-grid-5" data-kpi="hla-laba" data-label="Laba" data-icon="coins" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--primary-green);"></i><span>Trend Aset & Laba</span></h3>
+      <span class="chart-badge" id="hla-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 290px;"><canvas id="hlaTrendChart"></canvas></div>
+  </div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="pie-chart" style="width:18px;height:18px;color:var(--primary-green);"></i><span>Rasio Keuangan</span></h3>
+      <span class="chart-badge" id="hla-badge-rasio">-</span>
+    </div>
+    <div class="grid-3" id="hla-rasio-grid"></div>
+  </div>
+
+  
+  <div class="section-title"><i data-lucide="landmark" style="width:16px;height:16px;"></i>Realisasi Aset</div>
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--primary-green);"></i><span>Realisasi terhadap Target Aset</span></h3>
+        <span class="chart-badge" id="hla-badge-target-aset">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="hlaTargetAsetChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--primary-green);"></i><span>Leaderboard Realisasi Nominal Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="hlaLeaderAsetChart"></canvas></div>
+    </div>
+  </div>
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--primary-green);"></i><span>Tabel Realisasi Aset per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="hla-badge-table-aset">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Aktual Aset (Rp)</th><th class="num-col">Target RBB/C (Rp)</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="hlaTableAset"></tbody>
+      </table>
+    </div>
+  </div>
+
+  
+  <div class="section-title"><i data-lucide="coins" style="width:16px;height:16px;"></i>Realisasi Laba</div>
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:#0f766e;"></i><span>Realisasi terhadap Target Laba</span></h3>
+        <span class="chart-badge" id="hla-badge-target-laba">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="hlaTargetLabaChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:#0f766e;"></i><span>Leaderboard Realisasi Nominal Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="hlaLeaderLabaChart"></canvas></div>
+    </div>
+  </div>
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:#0f766e;"></i><span>Tabel Realisasi Laba per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="hla-badge-table-laba">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Aktual Laba (Rp)</th><th class="num-col">Target RBB/C (Rp)</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="hlaTableLaba"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="page-hldpk" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag tag-dpk">HIGHLIGHT KINERJA: DANA PIHAK KETIGA</span>
+      <span class="page-sub-info" id="hld-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="hld-nom" data-label="Nom DPK" data-icon="wallet" data-theme="bg-dpk"></div>
+  <div class="kpi-grid-5" data-kpi="hld-noa" data-label="NOA DPK" data-icon="users" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--card-teal);"></i><span>Trend DPK (Nominal & NOA)</span></h3>
+      <span class="chart-badge" id="hld-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 290px;"><canvas id="hldTrendChart"></canvas></div>
+  </div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="pie-chart" style="width:18px;height:18px;color:var(--card-teal);"></i><span>Komposisi DPK</span></h3>
+      <span class="chart-badge" id="hld-badge-komposisi">-</span>
+    </div>
+    <div class="grid-2">
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per Jenis Instrumen</strong><small>Nominal • Giro, Tabungan, Deposito</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hldInstrumenNom"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per Jenis Akad</strong><small>Nominal • Mudharabah, Wadiah</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hldAkadNom"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per Jenis Instrumen</strong><small>NOA • Giro, Tabungan, Deposito</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hldInstrumenNoa"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per Jenis Akad</strong><small>NOA • Mudharabah, Wadiah</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hldAkadNoa"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--card-teal);"></i><span>Realisasi terhadap Target Nominal</span></h3>
+        <span class="chart-badge" id="hld-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="hldTargetChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--card-teal);"></i><span>Leaderboard Realisasi Nominal Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="hldLeaderChart"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--card-teal);"></i><span>Tabel Realisasi Nominal DPK per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="hld-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Aktual Nominal (Rp)</th><th class="num-col">Aktual NOA</th><th class="num-col">Target RBB/C (Rp)</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="hldTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-hlpembiayaan" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag tag-pby">HIGHLIGHT KINERJA: PEMBIAYAAN</span>
+      <span class="page-sub-info" id="hlp-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="hlp-nom" data-label="Nom Pembiayaan" data-icon="hand-coins" data-theme="bg-pby"></div>
+  <div class="kpi-grid-5" data-kpi="hlp-noa" data-label="NOA Pembiayaan" data-icon="users" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--card-purple);"></i><span>Trend Pembiayaan (Nominal & NOA)</span></h3>
+      <span class="chart-badge" id="hlp-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 290px;"><canvas id="hlpTrendChart"></canvas></div>
+  </div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="pie-chart" style="width:18px;height:18px;color:var(--card-purple);"></i><span>Komposisi Pembiayaan</span></h3>
+      <span class="chart-badge" id="hlp-badge-komposisi">-</span>
+    </div>
+    <div class="grid-3">
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per Jenis Penggunaan</strong><small>Nominal • Modal Kerja, Investasi, Konsumer</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hlpGunaNom"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per Kategori Debitur</strong><small>Nominal • Korporate, UMKM, Konsumer</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hlpDebiturNom"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per NPF</strong><small>Nominal NPF • Kolektibilitas 1-5</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hlpKolNom"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per Jenis Penggunaan</strong><small>NOA • Modal Kerja, Investasi, Konsumer</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hlpGunaNoa"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Per Kategori Debitur</strong><small>NOA • Korporate, UMKM, Konsumer</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hlpDebiturNoa"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>% NPF</strong><small>Sesuai series data</small></div><span class="badge-growth badge-neutral" id="hlp-npf-val">-</span></div>
+        <div class="canvas-donut-wrap"><canvas id="hlpNpfChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--card-purple);"></i><span>Realisasi terhadap Target Nominal</span></h3>
+        <span class="chart-badge" id="hlp-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="hlpTargetChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--card-purple);"></i><span>Leaderboard Realisasi Nominal Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="hlpLeaderChart"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--card-purple);"></i><span>Tabel Realisasi Nominal Pembiayaan per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="hlp-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Aktual Nominal (Rp)</th><th class="num-col">Aktual NOA</th><th class="num-col">Target RBB/C (Rp)</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="hlpTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-hlekspansi" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">HIGHLIGHT KINERJA: EKSPANSI & RUN OFF</span>
+      <span class="page-sub-info" id="hle-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="eks-kpi-grid">
+    <div class="eks-kpi bg-eks">
+      <div class="eks-kpi-head"><span>Ekspansi Pembiayaan</span><i data-lucide="trending-up" style="width:16px;height:16px;"></i></div>
+      <div class="eks-kpi-row">
+        <div><span class="lbl">Nominal</span><span class="val" id="hle-eks-nom">-</span></div>
+        <div><span class="lbl">NOA</span><span class="val" id="hle-eks-noa">-</span></div>
+      </div>
+      <div class="eks-kpi-sub" id="hle-eks-sub">-</div>
+    </div>
+    <div class="eks-kpi bg-runoff">
+      <div class="eks-kpi-head"><span>Run Off Pembiayaan</span><i data-lucide="trending-down" style="width:16px;height:16px;"></i></div>
+      <div class="eks-kpi-row">
+        <div><span class="lbl">Nominal</span><span class="val" id="hle-ro-nom">-</span></div>
+      </div>
+      <div class="eks-kpi-sub" id="hle-ro-sub">-</div>
+    </div>
+    <div class="eks-kpi bg-net">
+      <div class="eks-kpi-head"><span>Net Ekspansi (Ekspansi − Run Off)</span><i data-lucide="scale" style="width:16px;height:16px;"></i></div>
+      <div class="eks-kpi-row">
+        <div><span class="lbl">Nominal</span><span class="val" id="hle-net-nom">-</span></div>
+      </div>
+      <div class="eks-kpi-sub" id="hle-net-sub">-</div>
+    </div>
+  </div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Ekspansi & Run Off Nominal Total Pembiayaan</span></h3>
+      <span class="chart-badge hle-badge-series">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 290px;"><canvas id="hleTrendTotal"></canvas></div>
+  </div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="pie-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Komposisi Ekspansi & Run Off Pembiayaan (Nominal)</span></h3>
+      <span class="chart-badge" id="hle-badge-komposisi">-</span>
+    </div>
+    <div class="grid-2">
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Komposisi Ekspansi</strong><small>Per kategori debitur • Korporate, UMKM, Konsumer</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hleDonutEks"></canvas></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-head"><div><strong>Komposisi Run Off</strong><small>Per kategori debitur • Korporate, UMKM, Konsumer</small></div></div>
+        <div class="canvas-donut-wrap"><canvas id="hleDonutRo"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="building-2" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Ekspansi & Run Off Korporate Nominal</span></h3>
+      <span class="chart-badge hle-badge-series">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="hleTrendKorp"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="store" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Ekspansi & Run Off UMKM Nominal</span></h3>
+      <span class="chart-badge hle-badge-series">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="hleTrendUmkm"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="shopping-bag" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Ekspansi & Run Off Konsumer Nominal</span></h3>
+      <span class="chart-badge hle-badge-series">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="hleTrendKons"></canvas></div>
+  </div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="users" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend NOA Ekspansi Total Pembiayaan, Korporate, UMKM, Konsumer</span></h3>
+      <span class="chart-badge hle-badge-series">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 290px;"><canvas id="hleTrendNoa"></canvas></div>
+  </div>
+</div>
+
+
+        
+
+
+
+<div class="filter-card" id="hlrDataCard" data-halaman="hlperingkat" style="display: none;">
+  <label class="filter-label" for="hlrData"><i data-lucide="database" style="width:13px;height:13px;"></i> Data</label>
+  <select id="hlrData" onchange="gantiDataPeringkat()"></select>
+</div>
+
+<div id="page-hlperingkat" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">HIGHLIGHT KINERJA: PERINGKAT UNIT KERJA & AO</span>
+      <span class="page-sub-info" id="hlr-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="trophy" style="width:18px;height:18px;color:var(--accent);"></i><span id="hlr-judul-unit">Peringkat Unit Kerja</span></h3>
+      <span class="chart-badge" id="hlr-badge-unit">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table rank-table">
+        <thead><tr><th class="rank-col">Peringkat</th><th>Nama Unit Kerja</th><th class="num-col">Aktual</th><th class="num-col">Target</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="hlrTableUnit"></tbody>
+      </table>
+    </div>
+    <div class="rank-catatan">Diurutkan berdasarkan % RBB/C tertinggi. Unit tanpa target diletakkan di bawah.</div>
+  </div>
+
+  
+  <div class="table-card" id="hlr-card-ao">
+    <div class="chart-card-header">
+      <h3><i data-lucide="user-check" style="width:18px;height:18px;color:var(--accent);"></i><span id="hlr-judul-ao">Peringkat AO</span></h3>
+      <span class="chart-badge" id="hlr-badge-ao">-</span>
+    </div>
+    <div class="ao-controls">
+      <div><label for="aoSegmen">Segmen AO</label><select id="aoSegmen" onchange="renderHalamanAktif()"><option value="">Umum (Konsumer + UMK)</option><option value="Konsumer">Konsumer</option><option value="UMK">UMK</option></select></div>
+      <div><label for="aoCakupan">Periode ranking AO</label><select id="aoCakupan" onchange="renderHalamanAktif()"><option value="posisi">Posisi data terpilih</option><option value="triwulan">Triwulanan</option><option value="ytd">Tahun berjalan (YTD)</option></select></div>
+    </div>
+    <details class="ao-basis-panel" id="aoBasisPanel">
+      <summary>Dasar angka sumber AO</summary>
+      <p>Sesuaikan dengan cara angka pada sheet disusun. Pilihan ini diperlukan untuk perhitungan triwulanan/YTD dan disimpan pada browser ini.</p>
+      <div class="ao-controls">
+        <div><label for="aoBasisAktual">Realisasi pada sumber</label><select id="aoBasisAktual" onchange="simpanBasisAo()"><option value="">Belum ditetapkan</option><option value="triwulan">Khusus setiap triwulan</option><option value="ytd">Kumulatif sejak Januari</option><option value="bulanan">Khusus setiap bulan / MTD</option></select></div>
+        <div><label for="aoBasisTarget">Target pada sumber</label><select id="aoBasisTarget" onchange="simpanBasisAo()"><option value="">Belum ditetapkan</option><option value="triwulan">Khusus setiap triwulan</option><option value="ytd">Kumulatif sampai triwulan</option></select></div>
+      </div>
+    </details>
+    <p id="aoCoverage" class="data-note" role="status"></p>
+    <div class="table-responsive">
+      <table class="realisasi-table rank-table">
+        <thead><tr><th class="rank-col">Peringkat</th><th>Nama AO / Kantor</th><th class="num-col">Realisasi pencairan</th><th class="num-col">Target</th><th class="num-col">Pencapaian</th></tr></thead>
+        <tbody id="hlrTableAo"></tbody>
+      </table>
+    </div>
+    <div class="rank-catatan" id="hlr-catatan-ao">-</div>
+  </div>
+</div>
+
+
+        
+        
+
+
+<div id="page-aset" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">ASET & LABA: ASET</span>
+      <span class="page-sub-info" id="aset-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="aset" data-label="Nom Aset" data-icon="landmark" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Aset</span></h3>
+      <span class="chart-badge" id="aset-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="aset-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Aset</span></h3>
+        <span class="chart-badge" id="aset-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="aset-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="aset-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Aset per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="aset-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="aset-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-laba" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">ASET & LABA: LABA</span>
+      <span class="page-sub-info" id="laba-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="laba" data-label="Nom Laba" data-icon="coins" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Laba</span></h3>
+      <span class="chart-badge" id="laba-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="laba-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Laba</span></h3>
+        <span class="chart-badge" id="laba-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="laba-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="laba-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Laba per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="laba-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="laba-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-pendopr" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">ASET & LABA: PENDAPATAN OPERASIONAL</span>
+      <span class="page-sub-info" id="pendopr-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="pendopr" data-label="Nom Pendapatan Operasional" data-icon="arrow-down-circle" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Pendapatan Operasional</span></h3>
+      <span class="chart-badge" id="pendopr-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="pendopr-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Pendapatan Operasional</span></h3>
+        <span class="chart-badge" id="pendopr-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="pendopr-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="pendopr-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Pendapatan Operasional per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="pendopr-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="pendopr-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-byopr" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">ASET & LABA: BIAYA OPERASIONAL</span>
+      <span class="page-sub-info" id="byopr-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="byopr" data-label="Nom Biaya Operasional" data-icon="arrow-up-circle" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Biaya Operasional</span></h3>
+      <span class="chart-badge" id="byopr-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="byopr-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Biaya Operasional</span></h3>
+        <span class="chart-badge" id="byopr-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="byopr-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="byopr-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Biaya Operasional per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="byopr-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="byopr-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-penydana" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">ASET & LABA: PENDAPATAN PENYALURAN DANA</span>
+      <span class="page-sub-info" id="penydana-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="penydana" data-label="Nom Pendapatan Penyaluran Dana" data-icon="banknote" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Pendapatan Penyaluran Dana</span></h3>
+      <span class="chart-badge" id="penydana-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="penydana-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Pendapatan Penyaluran Dana</span></h3>
+        <span class="chart-badge" id="penydana-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="penydana-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="penydana-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Pendapatan Penyaluran Dana per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="penydana-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="penydana-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-bybaghas" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">ASET & LABA: BIAYA BAGI HASIL & BONUS</span>
+      <span class="page-sub-info" id="bybaghas-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="bybaghas" data-label="Nom Biaya Bagi Hasil" data-icon="gift" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Biaya Bagi Hasil</span></h3>
+      <span class="chart-badge" id="bybaghas-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="bybaghas-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Biaya Bagi Hasil</span></h3>
+        <span class="chart-badge" id="bybaghas-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="bybaghas-target"></canvas></div>
+    </div>    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="bybaghas-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Biaya Bagi Hasil per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="bybaghas-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="bybaghas-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-fbi" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">ASET & LABA: PENDAPATAN FEE BASED INCOME</span>
+      <span class="page-sub-info" id="fbi-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="fbi" data-label="Nom Fee Based Income" data-icon="receipt" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Fee Based Income</span></h3>
+      <span class="chart-badge" id="fbi-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="fbi-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Fee Based Income</span></h3>
+        <span class="chart-badge" id="fbi-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="fbi-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="fbi-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Fee Based Income per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="fbi-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="fbi-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+        
+
+
+<div id="page-dpk" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">DANA PIHAK KETIGA: TOTAL DPK</span>
+      <span class="page-sub-info" id="dpk-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="dpk" data-label="Nom DPK" data-icon="wallet" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend DPK</span></h3>
+      <span class="chart-badge" id="dpk-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="dpk-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target DPK</span></h3>
+        <span class="chart-badge" id="dpk-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="dpk-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="dpk-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi DPK per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="dpk-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="dpk-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-giro" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">DANA PIHAK KETIGA: GIRO</span>
+      <span class="page-sub-info" id="giro-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="giro" data-label="Nom Giro" data-icon="building" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Giro</span></h3>
+      <span class="chart-badge" id="giro-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="giro-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Giro</span></h3>
+        <span class="chart-badge" id="giro-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="giro-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="giro-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Giro per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="giro-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="giro-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-tabungan" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">DANA PIHAK KETIGA: TABUNGAN</span>
+      <span class="page-sub-info" id="tabungan-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="tabungan" data-label="Nom Tabungan" data-icon="piggy-bank" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Tabungan</span></h3>
+      <span class="chart-badge" id="tabungan-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="tabungan-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Tabungan</span></h3>
+        <span class="chart-badge" id="tabungan-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="tabungan-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="tabungan-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Tabungan per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="tabungan-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="tabungan-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-deposito" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">DANA PIHAK KETIGA: DEPOSITO</span>
+      <span class="page-sub-info" id="deposito-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="deposito" data-label="Nom Deposito" data-icon="lock" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Deposito</span></h3>
+      <span class="chart-badge" id="deposito-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="deposito-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Deposito</span></h3>
+        <span class="chart-badge" id="deposito-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="deposito-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="deposito-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Deposito per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="deposito-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="deposito-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-noadpk" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">DANA PIHAK KETIGA: NOA DPK</span>
+      <span class="page-sub-info" id="noadpk-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="noadpk" data-label="Nom NOA DPK" data-icon="users" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend NOA DPK</span></h3>
+      <span class="chart-badge" id="noadpk-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="noadpk-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target NOA DPK</span></h3>
+        <span class="chart-badge" id="noadpk-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="noadpk-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="noadpk-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi NOA DPK per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="noadpk-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="noadpk-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+        
+
+
+<div id="page-pembiayaan" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: TOTAL PEMBIAYAAN</span>
+      <span class="page-sub-info" id="pembiayaan-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="pembiayaan" data-label="Nom Pembiayaan" data-icon="hand-coins" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Pembiayaan</span></h3>
+      <span class="chart-badge" id="pembiayaan-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="pembiayaan-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Pembiayaan</span></h3>
+        <span class="chart-badge" id="pembiayaan-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="pembiayaan-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="pembiayaan-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Pembiayaan per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="pembiayaan-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="pembiayaan-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-korporate" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: KORPORATE</span>
+      <span class="page-sub-info" id="korporate-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="korporate" data-label="Nom Pembiayaan Korporate" data-icon="building-2" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Pembiayaan Korporate</span></h3>
+      <span class="chart-badge" id="korporate-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="korporate-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Pembiayaan Korporate</span></h3>
+        <span class="chart-badge" id="korporate-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="korporate-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="korporate-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Pembiayaan Korporate per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="korporate-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="korporate-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-umkm" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: UMKM</span>
+      <span class="page-sub-info" id="umkm-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="umkm" data-label="Nom Pembiayaan UMKM" data-icon="store" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Pembiayaan UMKM</span></h3>
+      <span class="chart-badge" id="umkm-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="umkm-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Pembiayaan UMKM</span></h3>
+        <span class="chart-badge" id="umkm-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="umkm-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="umkm-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Pembiayaan UMKM per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="umkm-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="umkm-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-konsumer" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: KONSUMER</span>
+      <span class="page-sub-info" id="konsumer-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="konsumer" data-label="Nom Pembiayaan Konsumer" data-icon="shopping-bag" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Pembiayaan Konsumer</span></h3>
+      <span class="chart-badge" id="konsumer-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="konsumer-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Pembiayaan Konsumer</span></h3>
+        <span class="chart-badge" id="konsumer-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="konsumer-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="konsumer-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Pembiayaan Konsumer per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="konsumer-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="konsumer-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-modalkerja" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: MODAL KERJA</span>
+      <span class="page-sub-info" id="modalkerja-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="modalkerja" data-label="Nom Pembiayaan Modal Kerja" data-icon="briefcase" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Pembiayaan Modal Kerja</span></h3>
+      <span class="chart-badge" id="modalkerja-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="modalkerja-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Pembiayaan Modal Kerja</span></h3>
+        <span class="chart-badge" id="modalkerja-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="modalkerja-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="modalkerja-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Pembiayaan Modal Kerja per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="modalkerja-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="modalkerja-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-investasi" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: INVESTASI</span>
+      <span class="page-sub-info" id="investasi-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="investasi" data-label="Nom Pembiayaan Investasi" data-icon="factory" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Pembiayaan Investasi</span></h3>
+      <span class="chart-badge" id="investasi-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="investasi-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Pembiayaan Investasi</span></h3>
+        <span class="chart-badge" id="investasi-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="investasi-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="investasi-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Pembiayaan Investasi per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="investasi-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="investasi-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-noapby" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: NOA PEMBIAYAAN</span>
+      <span class="page-sub-info" id="noapby-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="noapby" data-label="Nom NOA Pembiayaan" data-icon="users" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend NOA Pembiayaan</span></h3>
+      <span class="chart-badge" id="noapby-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="noapby-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target NOA Pembiayaan</span></h3>
+        <span class="chart-badge" id="noapby-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="noapby-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="noapby-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi NOA Pembiayaan per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="noapby-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="noapby-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-ekskur" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: EKSPANSI KUR</span>
+      <span class="page-sub-info" id="ekskur-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="ekskur" data-label="Nom Ekspansi KUR" data-icon="trending-up" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Ekspansi KUR</span></h3>
+      <span class="chart-badge" id="ekskur-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="ekskur-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Ekspansi KUR</span></h3>
+        <span class="chart-badge" id="ekskur-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="ekskur-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="ekskur-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Ekspansi KUR per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="ekskur-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="ekskur-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-poskur" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: POSISI KUR</span>
+      <span class="page-sub-info" id="poskur-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="poskur" data-label="Nom Posisi KUR" data-icon="map-pin" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Posisi KUR</span></h3>
+      <span class="chart-badge" id="poskur-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="poskur-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Posisi KUR</span></h3>
+        <span class="chart-badge" id="poskur-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="poskur-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="poskur-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Posisi KUR per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="poskur-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="poskur-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-eksflpp" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: EKSPANSI FLPP</span>
+      <span class="page-sub-info" id="eksflpp-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="flpp-kpi-grid">
+    <section class="flpp-kpi"><h3>Realisasi NOA FLPP</h3><strong id="eksflpp-noa">-</strong><p id="eksflpp-noa-info">-</p></section>
+    <section class="flpp-kpi"><h3>Target NOA</h3><strong id="eksflpp-target-noa">-</strong><p>Target pada periode sumber</p></section>
+    <section class="flpp-kpi"><h3>Pencapaian NOA</h3><strong id="eksflpp-achieve">-</strong><p id="eksflpp-achieve-info">-</p></section>
+    <section class="flpp-kpi"><h3>Sisa / kelebihan target</h3><strong id="eksflpp-gap">-</strong><p id="eksflpp-gap-info">-</p></section>
+    <section class="flpp-kpi"><h3>Nominal pencairan</h3><strong id="eksflpp-nominal">-</strong><p>Pokok awal pencairan; satuan mengikuti sumber</p></section>
+  </div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Tren Realisasi NOA FLPP</span></h3>
+      <span class="chart-badge" id="eksflpp-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="eksflpp-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi NOA terhadap Target NOA FLPP</span></h3>
+        <span class="chart-badge" id="eksflpp-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="eksflpp-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="eksflpp-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi NOA dan Nominal Pencairan FLPP</span></h3>
+      <span class="chart-badge" id="eksflpp-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Realisasi NOA</th><th class="num-col">Target NOA</th><th class="num-col">Pencapaian</th><th class="num-col">Sisa / kelebihan NOA</th><th class="num-col">Nominal pencairan</th></tr></thead>
+        <tbody id="eksflpp-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-posflpp" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">PEMBIAYAAN: POSISI FLPP</span>
+      <span class="page-sub-info" id="posflpp-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="posflpp" data-label="Nom Posisi FLPP" data-icon="key" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend Posisi FLPP</span></h3>
+      <span class="chart-badge" id="posflpp-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="posflpp-trend"></canvas></div>  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target Posisi FLPP</span></h3>
+        <span class="chart-badge" id="posflpp-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="posflpp-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="posflpp-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi Posisi FLPP per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="posflpp-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="posflpp-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+        
+
+
+<div id="page-npftotal" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">NPF: TOTAL PEMBIAYAAN</span>
+      <span class="page-sub-info" id="npftotal-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="npftotal-pct" data-label="% NPF" data-icon="percent" data-theme="bg-npf"></div>
+  <div class="kpi-grid-5" data-kpi="npftotal-nom" data-label="Nom NPF" data-icon="alert-triangle" data-theme="bg-main"></div>
+  <div class="kpi-grid-5" data-kpi="npftotal-noa" data-label="NOA NPF" data-icon="users" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend % NPF, Nom NPF & NOA NPF</span></h3>
+      <span class="chart-badge" id="npftotal-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 300px;"><canvas id="npftotal-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target % NPF</span></h3>
+        <span class="chart-badge" id="npftotal-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npftotal-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi % NPF Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npftotal-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi % NPF per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="npftotal-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">% NPF</th><th class="num-col">Nom NPF</th><th class="num-col">NOA NPF</th><th class="num-col">Target % NPF</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="npftotal-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-npfkorp" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">NPF: KORPORATE</span>
+      <span class="page-sub-info" id="npfkorp-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="npfkorp-pct" data-label="% NPF" data-icon="percent" data-theme="bg-npf"></div>
+  <div class="kpi-grid-5" data-kpi="npfkorp-nom" data-label="Nom NPF" data-icon="alert-triangle" data-theme="bg-main"></div>
+  <div class="kpi-grid-5" data-kpi="npfkorp-noa" data-label="NOA NPF" data-icon="users" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend % NPF, Nom NPF & NOA NPF</span></h3>
+      <span class="chart-badge" id="npfkorp-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 300px;"><canvas id="npfkorp-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target % NPF</span></h3>
+        <span class="chart-badge" id="npfkorp-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfkorp-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi % NPF Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfkorp-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi % NPF per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="npfkorp-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">% NPF</th><th class="num-col">Nom NPF</th><th class="num-col">NOA NPF</th><th class="num-col">Target % NPF</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="npfkorp-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-npfumkm" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">NPF: UMKM</span>
+      <span class="page-sub-info" id="npfumkm-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="npfumkm-pct" data-label="% NPF" data-icon="percent" data-theme="bg-npf"></div>
+  <div class="kpi-grid-5" data-kpi="npfumkm-nom" data-label="Nom NPF" data-icon="alert-triangle" data-theme="bg-main"></div>
+  <div class="kpi-grid-5" data-kpi="npfumkm-noa" data-label="NOA NPF" data-icon="users" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend % NPF, Nom NPF & NOA NPF</span></h3>
+      <span class="chart-badge" id="npfumkm-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 300px;"><canvas id="npfumkm-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target % NPF</span></h3>
+        <span class="chart-badge" id="npfumkm-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfumkm-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi % NPF Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfumkm-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi % NPF per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="npfumkm-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">% NPF</th><th class="num-col">Nom NPF</th><th class="num-col">NOA NPF</th><th class="num-col">Target % NPF</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="npfumkm-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-npfkons" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">NPF: KONSUMER</span>
+      <span class="page-sub-info" id="npfkons-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="npfkons-pct" data-label="% NPF" data-icon="percent" data-theme="bg-npf"></div>
+  <div class="kpi-grid-5" data-kpi="npfkons-nom" data-label="Nom NPF" data-icon="alert-triangle" data-theme="bg-main"></div>
+  <div class="kpi-grid-5" data-kpi="npfkons-noa" data-label="NOA NPF" data-icon="users" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend % NPF, Nom NPF & NOA NPF</span></h3>
+      <span class="chart-badge" id="npfkons-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 300px;"><canvas id="npfkons-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target % NPF</span></h3>
+        <span class="chart-badge" id="npfkons-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfkons-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi % NPF Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfkons-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi % NPF per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="npfkons-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">% NPF</th><th class="num-col">Nom NPF</th><th class="num-col">NOA NPF</th><th class="num-col">Target % NPF</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="npfkons-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-npfkur" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">NPF: KUR</span>
+      <span class="page-sub-info" id="npfkur-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="npfkur-pct" data-label="% NPF" data-icon="percent" data-theme="bg-npf"></div>
+  <div class="kpi-grid-5" data-kpi="npfkur-nom" data-label="Nom NPF" data-icon="alert-triangle" data-theme="bg-main"></div>
+  <div class="kpi-grid-5" data-kpi="npfkur-noa" data-label="NOA NPF" data-icon="users" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend % NPF, Nom NPF & NOA NPF</span></h3>
+      <span class="chart-badge" id="npfkur-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 300px;"><canvas id="npfkur-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target % NPF</span></h3>
+        <span class="chart-badge" id="npfkur-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfkur-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi % NPF Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfkur-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi % NPF per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="npfkur-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">% NPF</th><th class="num-col">Nom NPF</th><th class="num-col">NOA NPF</th><th class="num-col">Target % NPF</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="npfkur-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-npfflpp" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">NPF: FLPP</span>
+      <span class="page-sub-info" id="npfflpp-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="npfflpp-pct" data-label="% NPF" data-icon="percent" data-theme="bg-npf"></div>
+  <div class="kpi-grid-5" data-kpi="npfflpp-nom" data-label="Nom NPF" data-icon="alert-triangle" data-theme="bg-main"></div>
+  <div class="kpi-grid-5" data-kpi="npfflpp-noa" data-label="NOA NPF" data-icon="users" data-theme="bg-alt"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend % NPF, Nom NPF & NOA NPF</span></h3>
+      <span class="chart-badge" id="npfflpp-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap" style="height: 300px;"><canvas id="npfflpp-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target % NPF</span></h3>
+        <span class="chart-badge" id="npfflpp-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfflpp-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi % NPF Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npfflpp-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi % NPF per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="npfflpp-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">% NPF</th><th class="num-col">Nom NPF</th><th class="num-col">NOA NPF</th><th class="num-col">Target % NPF</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="npfflpp-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+        
+
+
+<div id="page-roa" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: ROA</span>
+      <span class="page-sub-info" id="roa-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="roa" data-label="ROA" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend ROA</span></h3>
+      <span class="chart-badge" id="roa-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="roa-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target ROA</span></h3>
+        <span class="chart-badge" id="roa-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="roa-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="roa-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi ROA per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="roa-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="roa-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-ni" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: NI</span>
+      <span class="page-sub-info" id="ni-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="ni" data-label="NI" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend NI</span></h3>
+      <span class="chart-badge" id="ni-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="ni-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target NI</span></h3>
+        <span class="chart-badge" id="ni-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="ni-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="ni-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi NI per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="ni-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="ni-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-fdr" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: FDR</span>
+      <span class="page-sub-info" id="fdr-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="fdr" data-label="FDR" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend FDR</span></h3>
+      <span class="chart-badge" id="fdr-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="fdr-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target FDR</span></h3>
+        <span class="chart-badge" id="fdr-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="fdr-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="fdr-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi FDR per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="fdr-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="fdr-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-bopo" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: BOPO</span>
+      <span class="page-sub-info" id="bopo-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="bopo" data-label="BOPO" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend BOPO</span></h3>
+      <span class="chart-badge" id="bopo-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="bopo-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target BOPO</span></h3>
+        <span class="chart-badge" id="bopo-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="bopo-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="bopo-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi BOPO per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="bopo-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="bopo-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-npf" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: NPF</span>
+      <span class="page-sub-info" id="npf-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="npf" data-label="NPF" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend NPF</span></h3>
+      <span class="chart-badge" id="npf-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="npf-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target NPF</span></h3>
+        <span class="chart-badge" id="npf-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npf-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="npf-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi NPF per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="npf-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="npf-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-casa" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: CASA</span>
+      <span class="page-sub-info" id="casa-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="casa" data-label="CASA" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend CASA</span></h3>
+      <span class="chart-badge" id="casa-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="casa-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target CASA</span></h3>
+        <span class="chart-badge" id="casa-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="casa-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="casa-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi CASA per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="casa-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="casa-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-far" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: FAR</span>
+      <span class="page-sub-info" id="far-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="far" data-label="FAR" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend FAR</span></h3>
+      <span class="chart-badge" id="far-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="far-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target FAR</span></h3>
+        <span class="chart-badge" id="far-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="far-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="far-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi FAR per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="far-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="far-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-pctfbi" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: % FBI</span>
+      <span class="page-sub-info" id="pctfbi-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="pctfbi" data-label="% FBI" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend % FBI</span></h3>
+      <span class="chart-badge" id="pctfbi-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="pctfbi-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target % FBI</span></h3>
+        <span class="chart-badge" id="pctfbi-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="pctfbi-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="pctfbi-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi % FBI per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="pctfbi-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="pctfbi-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+        
+
+
+<div id="page-pctumkm" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <span class="page-tag">RASIO: % UMKM</span>
+      <span class="page-sub-info" id="pctumkm-info">-</span>
+    </div>
+    <button class="btn-back-highlight" onclick="bukaHalamanHighlight()">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i><span>Kembali ke Ringkasan</span>
+    </button>
+  </div>
+
+  
+  <div class="kpi-grid-5" data-kpi="pctumkm" data-label="% UMKM" data-icon="percent" data-theme="bg-main"></div>
+
+  
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="line-chart" style="width:18px;height:18px;color:var(--accent);"></i><span>Trend % UMKM</span></h3>
+      <span class="chart-badge" id="pctumkm-badge-trend">-</span>
+    </div>
+    <div class="canvas-line-wrap"><canvas id="pctumkm-trend"></canvas></div>
+  </div>
+
+  
+  <div class="middle-charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="bar-chart-3" style="width:18px;height:18px;color:var(--accent);"></i><span>Realisasi terhadap Target % UMKM</span></h3>
+        <span class="chart-badge" id="pctumkm-badge-target">-</span>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="pctumkm-target"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3><i data-lucide="award" style="width:18px;height:18px;color:var(--accent);"></i><span>Leaderboard Realisasi Unit Kerja</span></h3>
+      </div>
+      <div class="canvas-mid-wrap"><canvas id="pctumkm-leader"></canvas></div>
+    </div>
+  </div>
+
+  
+  <div class="table-card">
+    <div class="chart-card-header">
+      <h3><i data-lucide="table" style="width:18px;height:18px;color:var(--accent);"></i><span>Tabel Realisasi % UMKM per Konsolidasi / per Unit Kerja</span></h3>
+      <span class="chart-badge" id="pctumkm-badge-table">-</span>
+    </div>
+    <div class="table-responsive">
+      <table class="realisasi-table">
+        <thead><tr><th>No</th><th>Unit Kerja</th><th class="num-col">Data Aktual</th><th class="num-col">Target RBB/C</th><th class="num-col">YoY</th><th class="num-col">Ytd</th><th class="num-col">Mtm</th><th class="num-col">% RBB/C</th></tr></thead>
+        <tbody id="pctumkm-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+
+        <div id="page-users" class="page">
+          <div class="page-head">
+            <div class="page-head-left">
+              <span class="page-tag">PENGATURAN AKSES</span>
+              <span class="page-sub-info">Kelola akun untuk akses dashboard</span>
+            </div>
+          </div>
+          <div class="user-admin-grid">
+            <section class="chart-card user-admin-card">
+              <div class="chart-card-header"><h3><i data-lucide="user-plus" style="width:18px;height:18px;color:var(--primary-green);"></i><span>Tambah User Cabang</span></h3></div>
+              <p class="user-admin-help">Buat akun dengan username dan password. Tidak diperlukan email atau akun Google.</p>
+              <form onsubmit="tambahUserCabang(); return false;" class="user-admin-form">
+                <div class="form-group"><label for="newUserUsername">Username</label><input id="newUserUsername" type="text" autocomplete="off" minlength="3" maxlength="40" placeholder="contoh: kcbanjarmasin" required></div>
+                <div class="form-group"><label for="newUserPassword">Password</label><input id="newUserPassword" type="password" autocomplete="new-password" maxlength="128" placeholder="Buat password" required></div>
+                <button type="submit" id="btnCreateUser" class="user-create-btn">Tambah User Cabang</button>
+              </form>
+              <div id="userManagementMessage" class="user-message" aria-live="polite"></div>
+            </section>
+            <section class="chart-card user-admin-card">
+              <div class="chart-card-header"><h3><i data-lucide="users" style="width:18px;height:18px;color:var(--primary-green);"></i><span>Daftar Pengguna</span></h3><button type="button" class="user-refresh-btn" onclick="renderUserManagement()">Muat ulang</button></div>
+              <div class="user-table-wrap"><table class="user-admin-table"><thead><tr><th>Username</th><th>Nama</th><th>Role</th><th>Aksi</th></tr></thead><tbody id="usersTableBody"><tr><td colspan="4">Buka menu untuk memuat akun.</td></tr></tbody></table></div>
+            </section>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-data.js"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./mobile.js"></script>
+  <script src="./scripts.js"></script>
+</body>
+</html>
