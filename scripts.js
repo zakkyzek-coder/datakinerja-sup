@@ -163,8 +163,13 @@
       const idx = new Map();
       DATA[nama].forEach(r => {
         const key = r.u + '|' + r.p;
-        if (!r.c && idx.has(key) && JSON.stringify(idx.get(key)) !== JSON.stringify(r)) throw new Error('Duplikat data ' + nama + ': ' + r.u + ' / ' + r.p);
-        idx.set(r.u + '|' + r.p, r);
+        const sebelumnya = idx.get(key);
+        // Satu baris per unit/periode dipakai untuk indeks lookup.
+        // Jangan menghentikan seluruh dashboard hanya karena sumber berisi
+        // beberapa snapshot pada periode yang sama; pilih tanggal terbaru.
+        const tanggalR = r.d || r.m || r.p;
+        const tanggalSebelumnya = sebelumnya ? (sebelumnya.d || sebelumnya.m || sebelumnya.p) : '';
+        if (!sebelumnya || tanggalR >= tanggalSebelumnya) idx.set(key, r);
         if (r.k && !ENTITAS_KONSOLIDASI.includes(r.u) && !KELOMPOK_UNIT.has(r.u)) KELOMPOK_UNIT.set(r.u, r.k);
       });
       DATA_IDX[nama] = idx;
