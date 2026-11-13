@@ -131,14 +131,20 @@
     }
 
     function barisBulanan(rows) {
+      // Ambil snapshot terakhir per unit kerja untuk setiap bulan.
+      // Data Aset 1 dicatat harian, jadi tanggal terbaru harus ditentukan
+      // per kombinasi unit + bulan, bukan satu tanggal global untuk seluruh sheet.
       const akhir = new Map();
       rows.forEach(r => {
         const m = r.m || r.p.slice(0, 7), d = r.d || m + '-01';
         if (m > hariIni().slice(0, 7) || d > hariIni()) return;
-        if (!akhir.has(m) || d > akhir.get(m)) akhir.set(m, d);
+        const key = r.u + '|' + m;
+        if (!akhir.has(key) || d > akhir.get(key)) akhir.set(key, d);
       });
-      return rows.filter(r => akhir.get(r.m || r.p.slice(0, 7)) === (r.d || r.p.slice(0, 7) + '-01'))
-        .map(r => Object.assign({}, r, { p: r.m || r.p.slice(0, 7) }));
+      return rows.filter(r => {
+        const m = r.m || r.p.slice(0, 7), d = r.d || m + '-01';
+        return akhir.get(r.u + '|' + m) === d;
+      }).map(r => Object.assign({}, r, { p: r.m || r.p.slice(0, 7) }));
     }
 
     function semuaPeriode() {
