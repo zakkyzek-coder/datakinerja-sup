@@ -6,7 +6,7 @@
   'use strict';
 
   // Set this to the deployed Cloudflare Worker URL, not the Apps Script URL.
-  const API_BRIDGE_URL = 'PASTE_CLOUDFLARE_WORKER_URL_HERE';
+  const API_BRIDGE_URL = 'https://datakinerja-api.zakkyzek.workers.dev';
 
   function createRunner() {
     let successHandler = null;
